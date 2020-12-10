@@ -5,7 +5,10 @@ mongoose.set('useFindAndModify', false);
 const db = "mongodb+srv://interview:12stdmark789@interviewtaskcluster.dines.mongodb.net/InterviewTaskCluster?retryWrites=true&w=majority";
 var http = require("http");
 const Employee = require('../models/employee');
+const Slot = require("../models/slot")
 var nodemailer = require('nodemailer');
+const { count } = require('console');
+const { match } = require('assert');
 
 mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true }, err => {
     if (err) {
@@ -67,7 +70,62 @@ router.post('/registerEmployee', (req, res) => {
     )
 });
 
+router.get('/getEmployees', (req, res) => {
+    Employee.aggregate([{ "$group": {
+        "_id": {
+            "empName": "$empName",
+            "_id": "$_id"
+        }
+    }}], (error, user) => {
+      if (error) {
+        console.log(error)
+      } else {
+        res.status(200).send({ status: true,statusCode:200, msg: "Employee Names fetched Successfully!", data: user })
+      }
+    }).sort({ _id: -1 });
+  });
 
+  router.post('/saveSlot',  async(req, res) => {
+    console.log('rr',req.body);
+    let checkStartDateandTime = await Slot.find({
+            '$and':[
+               {empId:{$exists:true, $eq:req.body.empId}},
+               {startDate:{$exists:true, $eq:req.body.startDate}},
+               {startTime:{$exists:true, $eq:req.body.startTime}}
+            ]               
+            }).exec();
+    console.log("checkStartDateandTime",checkStartDateandTime);
+
+    let checkEndDateandTime = await Slot.find({
+        '$and':[
+            {empId:{$exists:true, $eq:req.body.empId}},
+            {endDate:{$exists:true, $eq:req.body.endDate}},
+            {endTime:{$exists:true, $eq:req.body.endTime}}
+         ] 
+    }).exec();
+    console.log("checkEndDateandTime",checkEndDateandTime);
+      if(checkStartDateandTime.length>0)
+      {
+        res.status(200).send({ status: true,statusCode:400, msg: "Slot Already Alloted!" })
+      }
+      else if(checkEndDateandTime.length>0)
+      {
+        res.status(200).send({ status: true,statusCode:400, msg: "Slot Already Alloted!" })
+    }
+     else
+      {
+        console.log(3);
+        let slotData = req.body;
+        let slot = new Slot(slotData);
+        await slot.save((error, slotData) => {
+          if (error) {
+            console.log(error);
+          } else {
+            res.status(200).send({ status: true,statusCode:200, msg: "Slot data Saved!", device: slotData });
+          }
+        })
+      }
+  });
 
 
 module.exports = router;
