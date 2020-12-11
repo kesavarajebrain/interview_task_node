@@ -7,8 +7,6 @@ var http = require("http");
 const Employee = require('../models/employee');
 const Slot = require("../models/slot")
 var nodemailer = require('nodemailer');
-const { count } = require('console');
-const { match } = require('assert');
 
 mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true }, err => {
     if (err) {
@@ -86,7 +84,6 @@ router.get('/getEmployees', (req, res) => {
   });
 
   router.post('/saveSlot',  async(req, res) => {
-    console.log('rr',req.body);
     let checkStartDateandTime = await Slot.find({
             '$and':[
                {empId:{$exists:true, $eq:req.body.empId}},
@@ -94,7 +91,6 @@ router.get('/getEmployees', (req, res) => {
                {startTime:{$exists:true, $eq:req.body.startTime}}
             ]               
             }).exec();
-    console.log("checkStartDateandTime",checkStartDateandTime);
 
     let checkEndDateandTime = await Slot.find({
         '$and':[
@@ -103,7 +99,6 @@ router.get('/getEmployees', (req, res) => {
             {endTime:{$exists:true, $eq:req.body.endTime}}
          ] 
     }).exec();
-    console.log("checkEndDateandTime",checkEndDateandTime);
       if(checkStartDateandTime.length>0)
       {
         res.status(200).send({ status: true,statusCode:400, msg: "Slot Already Alloted!" })
@@ -114,12 +109,10 @@ router.get('/getEmployees', (req, res) => {
     }
      else
       {
-        console.log(3);
         let slotData = req.body;
         let slot = new Slot(slotData);
         await slot.save((error, slotData) => {
           if (error) {
-            console.log(error);
           } else {
             res.status(200).send({ status: true,statusCode:200, msg: "Slot data Saved!", device: slotData });
           }
